@@ -467,6 +467,7 @@ module Jabber
               queue(:pending_messages) << message
             end
           end
+          sleep 10 * 60 # minutes
         }
       }
     end
