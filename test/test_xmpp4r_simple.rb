@@ -116,9 +116,9 @@ class JabberSimpleTest < Test::Unit::TestCase
     # First clear the client's message queue, just in case.
     assert_kind_of Array, @client2.received_messages
 
-    # Next ensure that we're not subscribed, so that we can test the deferred message queue.
-    @client1.remove(@jid2)
-    @client2.remove(@jid1)
+    # Next ensure that we're subscribed, so that we don't test the deferred message queue.
+    @client1.add(@jid2)
+    @client2.add(@jid1)
     sleep 2
 
     # Deliver the messages; this should be received by the other client.
