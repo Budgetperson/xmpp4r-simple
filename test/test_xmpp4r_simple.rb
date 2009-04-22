@@ -96,6 +96,9 @@ class JabberSimpleTest < Test::Unit::TestCase
       assert_equal false, @client2.subscribed_to?(@jid1)
     end
 
+    assert @client1.accept_subscriptions?
+    assert @client2.accept_subscriptions?
+
     @client1.new_subscriptions
     @client1.add(@jid2)
 
@@ -218,6 +221,35 @@ class JabberSimpleTest < Test::Unit::TestCase
     end
 
     @client1.reconnect
+  end
+
+  def test_message_sent_to_unsubscribed_user_gets_queued_and_retried_periodically
+    @client1.remove(@jid2) # not subscribed to client2
+    @client2.add(@jid1)
+
+    assert !@client1.subscribed_to?(@jid2)
+
+    @client2.deliver(@jid1, "testing")
+
+    # Fetch the message; allow up to ten seconds for the delivery to occur.
+    messages = []
+    begin
+      Timeout::timeout(5) {
+        loop do
+          messages = @client1.received_messages
+          flunk "Message delivered, expected none" unless messages.empty?
+          sleep 1
+        end
+      }
+    rescue Timeout::Error
+      assert messages.empty?
+    end
+
+    assert @client2.send(:queue, :pending_messages).length > 0
+
+    # restore
+    @client1.add(@jid2)
+    @client2.add(@jid1)
   end
 
   private
